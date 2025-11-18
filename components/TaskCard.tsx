@@ -1,7 +1,7 @@
 'use client'
 
 import { Task } from '@/types/task'
-import { Edit2, Trash2, Calendar, Flag } from 'lucide-react'
+import { Edit2, Trash2, Calendar, Flag, LucideStopCircle, LucideLoader, LucideCheck } from 'lucide-react'
 
 interface TaskCardProps {
   task: Task
@@ -21,6 +21,12 @@ const statusLabels = {
   done: '完了',
 }
 
+const statusIcons = {
+  todo: <LucideStopCircle className='h-4 w-4'/>,
+  in_progress: <LucideLoader className='h-4 w-4'/>,
+  done: <LucideCheck className='h-4 w-4'/>,
+}
+
 const priorityColors = {
   low: 'text-green-600',
   medium: 'text-yellow-600',
@@ -37,7 +43,7 @@ export default function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-5 border border-gray-200">
       <div className="flex items-start justify-between gap-3 mb-3">
-        <h3 className="text-lg font-semibold text-gray-900 flex-1 line-clamp-2">
+        <h3 className="text-lg font-semibold text-green-800 flex-1 line-clamp-2">
           {task.title}
         </h3>
         <div className="flex gap-2 flex-shrink-0">
@@ -70,7 +76,10 @@ export default function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
         <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[task.status]}`}>
-          {statusLabels[task.status]}
+          <div className="flex items-center gap-1">
+            {statusIcons[task.status]}
+            {statusLabels[task.status]}
+          </div>
         </span>
         <span className={`flex items-center gap-1 text-xs font-medium ${priorityColors[task.priority]}`}>
           <Flag className="h-3 w-3" />

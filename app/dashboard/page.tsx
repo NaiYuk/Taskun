@@ -7,7 +7,7 @@ import { Task, TaskFormData } from '@/types/task'
 import TaskCard from '@/components/TaskCard'
 import TaskForm from '@/components/TaskForm'
 import SearchBar from '@/components/SearchBar'
-import { Plus, LogOut, Loader2, SortAsc, SortAscIcon, LucideSortAsc, LucideSortDesc } from 'lucide-react'
+import { Plus, LogOut, Loader2, SortAsc, SortAscIcon, LucideSortAsc, LucideSortDesc, LucideSaveAll, LucidePentagon, LucideAlignHorizontalSpaceAround, LucideStopCircle, LucideBetweenHorizonalEnd, LucideActivity, LucideLoader, LucideCheck } from 'lucide-react'
 
 export default function DashboardPage() {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -15,7 +15,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editingTask, setEditingTask] = useState<Task | undefined>()
-  const [sortChange, setSortChange] = useState<boolean>(false)
+  const [sortChange, setSortChange] = useState<boolean>(true) // true: 昇順、false: 降順
   const [userEmail, setUserEmail] = useState<string>('')
   const router = useRouter()
   const supabase = createClient()
@@ -300,21 +300,33 @@ export default function DashboardPage() {
         {/* 統計カード */}
         <h1 className="text-xl font-bold text-green-800 h-9">タスク統計情報</h1>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-200">
-            <div className="text-sm text-gray-600 mb-1">全体</div>
+          <div className="bg-yellow-100 bg-opacity-50 rounded-xl shadow-sm p-5 border border-gray-200">
+            <div className="text-sm text-gray-600 mb-1">
+              <LucideActivity className='h-5 w-5 mb-2 text-yellow-600'/>
+              全体
+            </div>
             <div className="text-3xl font-bold text-gray-900">{taskStats.total}</div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-5 border border-gray-200">
-            <div className="text-sm text-gray-600 mb-1">未着手</div>
+          <div className="bg-gray-100 bg-opacity-50 rounded-xl shadow-sm p-5 border border-gray-200">
+            <div className="text-sm text-gray-600 mb-1">
+              <LucideStopCircle className='h-5 w-5 mb-2 text-gray-600'/>
+              未着手
+            </div>
             <div className="text-3xl font-bold text-gray-600">{taskStats.todo}</div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-5 border border-blue-200">
-            <div className="text-sm text-blue-600 mb-1">進行中</div>
-            <div className="text-3xl font-bold text-blue-600">{taskStats.in_progress}</div>
+          <div className="bg-indigo-100 bg-opacity-50 rounded-xl shadow-sm p-5 border border-blue-200">
+            <div className="text-sm text-gray-600 mb-1">
+              <LucideLoader className='h-5 w-5 mb-2 text-indigo-600'/>
+              進行中
+            </div>
+            <div className="text-3xl font-bold text-gray-600">{taskStats.in_progress}</div>
           </div>
-          <div className="bg-white rounded-xl shadow-sm p-5 border border-green-200">
-            <div className="text-sm text-green-600 mb-1">完了</div>
-            <div className="text-3xl font-bold text-green-600">{taskStats.done}</div>
+          <div className="bg-green-200 bg-opacity-70 rounded-xl shadow-sm p-5 border border-green-300">
+            <div className="text-sm text-gray-600 mb-1">
+              <LucideCheck className='h-5 w-5 mb-2 text-green-600'/>
+              完了
+            </div>
+            <div className="text-3xl font-bold text-gray-600">{taskStats.done}</div>
           </div>
         </div>
 
@@ -346,7 +358,7 @@ export default function DashboardPage() {
           <div>
             <button
               onClick={handleChangeSort}
-              className="p-2 mb-1 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              className="p-2 mb-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
               title="日付でソート"
             >
               {/* <button

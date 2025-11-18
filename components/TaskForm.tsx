@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Task, TaskFormData, TaskStatus, TaskPriority } from '@/types/task'
-import { X } from 'lucide-react'
+import { LucideBookMarked, LucideCreativeCommons, LucideEdit, LucideJoystick, LucidePlus, LucideWorkflow, X } from 'lucide-react'
 
 interface TaskFormProps {
   task?: Task
@@ -38,7 +38,10 @@ export default function TaskForm({ task, onSubmit, onClose }: TaskFormProps) {
       <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between rounded-t-2xl">
           <h2 className="text-2xl font-bold text-gray-900">
-            {task ? 'タスクを編集' : '新しいタスク'}
+            <div className="flex items-center gap-2 mt-2">
+              {task ? <LucideEdit /> : <LucidePlus />}
+              {task ? 'タスクを編集' : '新しいタスク'}
+            </div>
           </h2>
           <button
             onClick={onClose}
@@ -51,7 +54,7 @@ export default function TaskForm({ task, onSubmit, onClose }: TaskFormProps) {
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              タイトル <span className="text-red-500">*</span>
+              タイトル <span className="text-red-500">* 必須</span>
             </label>
             <input
               type="text"

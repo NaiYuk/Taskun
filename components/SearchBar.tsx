@@ -43,7 +43,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           </div>
           <input
             type="text"
-            placeholder="タスクを検索（タイトル・説明）..."
+            placeholder="タスクを検索（タイトル・説明)"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"
