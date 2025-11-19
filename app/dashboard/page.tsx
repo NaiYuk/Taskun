@@ -257,6 +257,35 @@ export default function DashboardPage() {
     setShowForm(true)
   }
 
+  // タスク通知処理
+  const handleNotifyTask = async (task: Task) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Slack通知を送信(Google OAuthにaccess_tokenが必要なため、Calendar APIを呼び出す)
+      await fetch('/api/slack/notify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'notified',
+          task: {
+            title: task.title,
+            description: task.description,
+            status: task.status,
+            priority: task.priority,
+          },
+          user_email: userEmail,
+        }),
+      })
+
+      alert('Slackに通知を送信しました')
+    } catch (error) {
+      console.error('タスク通知エラー:', error)
+      alert('タスクの通知に失敗しました')
+    }
+  }
+
 
   // フォームを閉じる
   const handleCloseForm = () => {
@@ -398,6 +427,7 @@ export default function DashboardPage() {
                 task={task}
                 onEdit={handleEditTask}
                 onDelete={handleDeleteTask}
+                onNotify={handleNotifyTask}
               />
             ))}
           </div>

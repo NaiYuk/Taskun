@@ -1,12 +1,14 @@
 'use client'
 
 import { Task } from '@/types/task'
-import { Edit2, Trash2, Calendar, Flag, LucideStopCircle, LucideLoader, LucideCheck } from 'lucide-react'
+import { Edit2, Trash2, Calendar, Flag, LucideStopCircle, LucideLoader, LucideCheck, Edit, LucideBell } from 'lucide-react'
 
 interface TaskCardProps {
   task: Task
   onEdit: (task: Task) => void
   onDelete: (id: string) => void
+  onNotify: (task: Task) => void | Promise<void>
+
 }
 
 const statusColors = {
@@ -39,7 +41,7 @@ const priorityLabels = {
   high: '高',
 }
 
-export default function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
+export default function TaskCard({ task, onEdit, onDelete, onNotify }: TaskCardProps) {
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-5 border border-gray-200">
       <div className="flex items-start justify-between gap-3 mb-3">
@@ -47,6 +49,13 @@ export default function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
           {task.title}
         </h3>
         <div className="flex gap-2 flex-shrink-0">
+          <button
+            onClick={() => onNotify(task)}
+            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+            title="編集"
+          >
+            <LucideBell className="h-4 w-4" />
+          </button>
           <button
             onClick={() => onEdit(task)}
             className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -74,7 +83,7 @@ export default function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
         </p>
       )}
 
-      <div className="flex flex-wrap items-center gap-2 mb-3">
+      <div className="flex flex-wrap items-center gap-4 mb-3">
         <span className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[task.status]}`}>
           <div className="flex items-center gap-1">
             {statusIcons[task.status]}
