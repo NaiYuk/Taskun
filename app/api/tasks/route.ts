@@ -82,6 +82,12 @@ export async function GET(request: NextRequest) {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
+    // ページング対応（オフセットとリミット(9)）
+    const page = Number(searchParams.get('page') || 1)
+    const limit = 9;
+    const offset = (page - 1) * limit
+    query = query.range(offset, offset + limit - 1)
+
     // LIKE検索（タイトルまたは説明）
     if (search) {
       query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
@@ -103,7 +109,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    return NextResponse.json(tasks)
+    return NextResponse.json({
+      tasks,
+      pagination: ({
+        page,
+        perPage: limit,
+        total: tasks.length < limit ? offset + tasks.length : offset + limit + 1,
+        totalPages: Math.ceil((tasks.length < limit ? offset + tasks.length : offset + limit + 1) / limit),
+      }),
+    }, { status: 200 })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

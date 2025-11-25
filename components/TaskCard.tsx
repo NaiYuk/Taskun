@@ -1,7 +1,7 @@
 'use client'
 
 import { Task } from '@/types/task'
-import { Edit2, Trash2, Calendar, Flag, LucideStopCircle, LucideLoader, LucideCheck, Edit, LucideBell } from 'lucide-react'
+import { Edit2, Trash2, Calendar, Flag, LucideStopCircle, LucideLoader, LucideCheck, Edit, LucideBell, LucideCalendar } from 'lucide-react'
 
 interface TaskCardProps {
   task: Task
@@ -51,10 +51,10 @@ export default function TaskCard({ task, onEdit, onDelete, onNotify }: TaskCardP
         <div className="flex gap-2 flex-shrink-0">
           <button
             onClick={() => onNotify(task)}
-            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-            title="編集"
+            className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+            title="カレンダーに追加"
           >
-            <LucideBell className="h-4 w-4" />
+            <LucideCalendar className="h-4 w-4" />
           </button>
           <button
             onClick={() => onEdit(task)}

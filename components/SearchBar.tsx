@@ -10,9 +10,10 @@ interface SearchBarProps {
     status: string
     priority: string
   }) => void
+  onClearFilter: () => void
 }
 
-export default function SearchBar({ onSearch }: SearchBarProps) {
+export default function SearchBar({ onSearch, onClearFilter }: SearchBarProps) {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [priority, setPriority] = useState('')
@@ -30,6 +31,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
     setSearch('')
     setStatus('')
     setPriority('')
+    onClearFilter()
   }
 
   const hasActiveFilters = search || status || priority
