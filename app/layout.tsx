@@ -2,7 +2,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'タスク管理アプリ',
+  title: 'タスク管理アプリ たすくん。',
   description: 'Next.js + Supabaseで構築したタスク管理アプリケーション',
 }
 
