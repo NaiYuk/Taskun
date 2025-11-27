@@ -6,7 +6,7 @@ import { Task, TaskFormData } from '@/types/task';
 import { generateGoogleCalendarUrl } from "@/lib/google/calendar-url";
 import { Loader2, LucideSortAsc, LucideSortDesc, Plus } from "lucide-react";
 import SearchBar from "./SearchBar";
-import Pagination from "./Pagenation";
+import Pagination from "./Pagination";
 import TaskForm from "./TaskForm";
 import TaskCard from "./TaskCard";
 
