@@ -1,16 +1,17 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { useCallback, useEffect, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { Task, TaskFormData } from '@/types/task';
 import { generateGoogleCalendarUrl } from "@/lib/google/calendar-url";
 import { Loader2, LucideSortAsc, LucideSortDesc, Plus } from "lucide-react";
 import SearchBar from "./SearchBar";
-import Pagination from "./Pagenation";
+import Pagination from "./Pagination";
 import TaskForm from "./TaskForm";
 import TaskCard from "./TaskCard";
 
 type PaginationState = { page: number; perPage: number; total: number; totalPages: number }
+type SortItem = 'title' | 'priority' | 'due_date' | 'created_at'
 export function TaskList({
   page = 1,
   userEmail,
@@ -29,6 +30,7 @@ export function TaskList({
     const [editingTask, setEditingTask] = useState<Task | undefined>(undefined)
     const [pagination, setPagination] = useState<PaginationState | null>(null)
     const [loading, setLoading] = useState(false)
+    const [sortItem, setSortItem] = useState<SortItem>('created_at')
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
     const [filters, setFilters] = useState({ search: '', status: '', priority: '' })
     const supabase = createClient()
@@ -44,9 +46,36 @@ export function TaskList({
       onStatsChange?.(stats)
     }, [onStatsChange])
 
-    const applySort = useCallback((list: Task[], order: 'asc' | 'desc') => {
+    const applySort = useCallback((list: Task[], key: SortItem, order: 'asc' | 'desc') => {
       return [...list].sort((a, b) => {
-        const diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        let diff = 0
+
+        switch (key) {
+          case 'title':
+            diff = a.title.localeCompare(b.title)
+            break
+          case 'priority': {
+            const priorityValue = { high: 3, medium: 2, low: 1 }
+            diff = priorityValue[a.priority] - priorityValue[b.priority]
+            break
+          }
+          case 'due_date': {
+            if (!a.due_date && !b.due_date) {
+              diff = 0
+            } else if (!a.due_date) {
+              diff = 1
+            } else if (!b.due_date) {
+              diff = -1
+            } else {
+              diff = new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+            }
+            break
+          }
+          case 'created_at':
+          default:
+            diff = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        }
+
         return order === 'asc' ? diff : -diff
       })
     }, [])
@@ -79,22 +108,22 @@ export function TaskList({
           return
         }
 
-        const sortedTasks = applySort(data.tasks, sortOrder)
+        const sortedTasks = applySort(data.tasks, sortItem ,sortOrder)
         setTasks(sortedTasks)
         notifyTasksChange(sortedTasks)
         setPagination(data.pagination)
       } finally {
         setLoading(false)
       }
-    }, [applySort, filters, notifyTasksChange, sortOrder])
+    }, [applySort, filters, notifyTasksChange, sortItem, sortOrder])
 
     useEffect(() => {
       loadTasks(page, filters)
     }, [page, filters, loadTasks])
 
     useEffect(() => {
-      setTasks((prev) => applySort(prev, sortOrder))
-    }, [sortOrder])
+      setTasks((prev) => applySort(prev, sortItem, sortOrder))
+    }, [applySort, sortItem, sortOrder])
 
   useEffect(() => {
     const channel = supabase
@@ -126,6 +155,10 @@ export function TaskList({
   // タスクの日付でソートを切り替える処理
   const handleChangeSort = () => {
     setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+  }
+
+  const handleChangeSortKey = (event: ChangeEvent<HTMLSelectElement>) => {
+    setSortItem(event.target.value as SortItem)
   }
 
   // フィルタ解除処理
@@ -301,16 +334,29 @@ export function TaskList({
         <div className="flex gap-4 items-center mt-8">
           <h1 className="text-xl font-bold text-green-800 h-9">タスク一覧</h1>
           {/* ソートを行うボタン */}
-          <div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="sortKey" className="text-sm text-gray-700 mb-2">ソートキー</label>
+            <select
+              id="sortKey"
+              value={sortItem}
+              onChange={handleChangeSortKey}
+              className="border border-green-200 rounded-md px-3 py-2 mb-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400"
+            >
+              <option value="title">タイトル</option>
+              <option value="priority">優先度</option>
+              <option value="due_date">期限日</option>
+              <option value="created_at">作成日時</option>
+            </select>
             <button
               onClick={handleChangeSort}
               className="p-2 mb-2 text-green-600 hover:bg-green-100 rounded-lg transition-colors"
-              title="日付でソート"
+              title="ソート順を切り替え"
             >
               {sortOrder === 'desc' ? (
-                <LucideSortDesc className="h-6 w-6 border-rounded text-gray-600 hover:text-green-800" aria-label="日付降順でソート" />
+                <LucideSortDesc className="h-6 w-6 border-rounded text-gray-600 hover:text-green-800" aria-label="降順でソート" />
               ) : (
-                <LucideSortAsc className="h-6 w-6 border-rounded text-gray-600 hover:text-green-800" aria-label="日付昇順でソート" />              )}
+                <LucideSortAsc className="h-6 w-6 border-rounded text-gray-600 hover:text-green-800" aria-label="昇順でソート" />
+              )}
             </button>
           </div>
           <p className="text-sm text-gray-500 pb-2">(タスクの編集・削除もこちらで行います)</p>
