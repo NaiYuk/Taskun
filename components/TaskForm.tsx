@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState} from 'react'
 import { Task, TaskFormData, TaskStatus, TaskPriority } from '@/types/task'
-import { LucideBookMarked, LucideCreativeCommons, LucideEdit, LucideJoystick, LucidePlus, LucideWorkflow, X } from 'lucide-react'
+import { LucideEdit, LucidePause, LucidePlus, Mic,  X } from 'lucide-react'
 
 interface TaskFormProps {
   task?: Task
@@ -19,6 +19,20 @@ export default function TaskForm({ task, onSubmit, onClose }: TaskFormProps) {
     due_date: task?.due_date || '',
   })
   const [loading, setLoading] = useState(false)
+  const [listeningField, setListeningField] = useState<null | 'title' | 'description'>(null)
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false)
+  const recognitionRef = useRef<any>(null)
+
+  useEffect(() => {
+    const isSupported = typeof window !== 'undefined' &&
+      ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)
+
+    setIsSpeechSupported(isSupported)
+
+    return () => {
+      recognitionRef.current?.stop()
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,6 +45,50 @@ export default function TaskForm({ task, onSubmit, onClose }: TaskFormProps) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSpeechToggle = (field: 'title' | 'description') => {
+    if (!isSpeechSupported) return
+
+    if (listeningField === field) {
+      recognitionRef.current?.stop()
+      setListeningField(null)
+      return
+    }
+
+    recognitionRef.current?.stop()
+
+    const SpeechRecognition =
+      typeof window !== 'undefined'
+        ? ((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
+        : null
+
+    if (!SpeechRecognition) return
+
+    const recognition = new SpeechRecognition()
+    recognitionRef.current = recognition
+    recognition.lang = 'ja-JP'
+    recognition.interimResults = false
+    recognition.continuous = false
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript
+      setFormData((prev) => ({
+        ...prev,
+        [field]: `${prev[field]}${prev[field] ? ' ' : ''}${transcript}`,
+      }))
+    }
+
+    recognition.onerror = () => {
+      setListeningField(null)
+    }
+
+    recognition.onend = () => {
+      setListeningField(null)
+    }
+
+    recognition.start()
+    setListeningField(field)
   }
 
   return (
@@ -56,27 +114,53 @@ export default function TaskForm({ task, onSubmit, onClose }: TaskFormProps) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               タイトル <span className="text-red-500">* 必須</span>
             </label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"
-              placeholder="タスクのタイトルを入力"
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                required
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 ${listeningField === 'title' ? 'ring-2 ring-green-500 border-green-500' : ''}`}
+                placeholder="タスクのタイトルを入力"
+              />
+              <button
+                type="button"
+                onClick={() => handleSpeechToggle('title')}
+                disabled={!isSpeechSupported}
+                aria-pressed={listeningField === 'title'}
+                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
+                title={isSpeechSupported ? 'タイトルを音声入力する' : '音声入力はこのブラウザでサポートされていません'}
+              >
+                {listeningField === 'title' ? <LucidePause className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                <span className="sr-only">タイトルを音声入力</span>
+              </button>
+            </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               説明
             </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={4}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 resize-none"
-              placeholder="タスクの詳細を入力"
-            />
+            <div className="flex gap-2">
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={4}
+                className={`flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900 resize-none ${listeningField === 'description' ? 'ring-2 ring-green-500 border-green-500' : ''}`}
+                placeholder="タスクの詳細を入力"
+              />
+              <button
+                type="button"
+                onClick={() => handleSpeechToggle('description')}
+                disabled={!isSpeechSupported}
+                aria-pressed={listeningField === 'description'}
+                className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
+                title={isSpeechSupported ? '説明を音声入力する' : '音声入力はこのブラウザでサポートされていません'}
+              >
+                {listeningField === 'description' ? <LucidePause className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                <span className="sr-only">説明を音声入力</span>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
