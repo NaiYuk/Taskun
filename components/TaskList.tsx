@@ -330,17 +330,22 @@ export function TaskList({
           </button>
         </div>
 
-        {/* タスク一覧 */}
-        <div className="flex gap-4 items-center mt-8">
-          <h1 className="text-xl font-bold text-green-800 h-9">タスク一覧</h1>
-          {/* ソートを行うボタン */}
-          <div className="flex items-center gap-2">
-            <label htmlFor="sortKey" className="text-sm text-gray-500 mb-2">ソートキー:</label>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+          <h1 className="text-xl font-bold text-green-800 h-9">
+            タスク一覧
+          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <label
+              htmlFor="sortKey"
+              className="text-sm text-gray-500"
+            >
+              ソートキー:
+            </label>
             <select
               id="sortKey"
               value={sortItem}
               onChange={handleChangeSortKey}
-              className="border border-green-200 rounded-md px-3 py-2 mb-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400"
+              className="border border-green-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400"
             >
               <option value="title">タイトル</option>
               <option value="priority">優先度</option>
@@ -349,17 +354,21 @@ export function TaskList({
             </select>
             <button
               onClick={handleChangeSort}
-              className="p-2 mb-2 text-green-600 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+              className="p-2 text-green-600 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
               title="ソート順を切り替え"
             >
               {sortOrder === 'desc' ? (
-                <LucideSortDesc className="h-6 w-6 border-rounded text-gray-100" aria-label="降順でソート" />
+                <LucideSortDesc className="h-6 w-6 text-gray-100" aria-label="降順でソート" />
               ) : (
-                <LucideSortAsc className="h-6 w-6 border-rounded text-gray-100" aria-label="昇順でソート" />
+                <LucideSortAsc className="h-6 w-6 text-gray-100" aria-label="昇順でソート" />
               )}
             </button>
           </div>
-          <p className="text-sm text-gray-500 pb-2">タスクの編集・削除・ソート・Google Calendarへのスケジュール追加はこちらで行います</p>
+
+          {/* 説明テキスト */}
+          <p className="text-sm text-gray-500 sm:ml-2">
+            タスクの編集・削除・ソート・Google Calendarの予定追加はこちらで行います
+          </p>
         </div>
 
         {loading ? (

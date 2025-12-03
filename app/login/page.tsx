@@ -44,7 +44,7 @@ export default function LoginPage() {
         router.refresh()
       }
     } catch (error: any) {
-      setError(error.message || '認証エラーが発生しました')
+      setError("メールアドレスまたはパスワードが正しくありません。")
     } finally {
       setLoading(false)
     }
