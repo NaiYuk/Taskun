@@ -225,7 +225,7 @@ export function TaskList({
           description: data.description,
           status: data.status,
           priority: data.priority,
-          due_date: data.due_date,
+          due_date: data.due_date === "" ? null : data.due_date,
           updated_at: new Date().toISOString(),
         })
         .eq('id', editingTask.id)
@@ -263,7 +263,7 @@ export function TaskList({
       setEditingTask(undefined)
     } catch (error) {
       console.error('タスク更新エラー:', error)
-      alert('タスクの更新に失敗しました')
+      alert('タスクの更新に失敗しました: ' + JSON.stringify(error))
     }
   }
 
