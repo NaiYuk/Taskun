@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'タスク管理アプリ たすくん。',
-  description: 'Next.js + Supabaseで構築したタスク管理アプリケーション',
+  description: 'シンプルで使いやすいタスク管理アプリケーションです。SlackやGoogleカレンダーと連携し、効率的にタスクを管理できます。',
 }
 
 export default function RootLayout({

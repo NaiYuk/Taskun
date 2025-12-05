@@ -200,8 +200,8 @@ export default function TaskForm({ task, onSubmit, onClose }: TaskFormProps) {
               </label>
               <input
                 type="date"
-                value={formData.due_date}
-                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                value={formData.due_date || ''}
+                onChange={(e) => setFormData({ ...formData, due_date: e.target.value || "" })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"
               />
             </div>
