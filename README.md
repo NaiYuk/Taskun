@@ -15,6 +15,7 @@ Next.js (App Router) + Supabase + Tailwind CSSで構築した、フル機能の�
    - タスクの作成、編集、削除
    - タスク一覧表示
    - タスクの詳細情報（タイトル、説明、ステータス、優先度、期限日）
+   - タスク詳細情報に音声入力も搭載
 
 3. **検索・フィルタリング**
    - タイトル・説明に対するLIKE検索
@@ -163,6 +164,7 @@ npm run dev
   - リアルタイム: Supabase Realtime
 - **通知**: Slack Incoming Webhooks
 - **アイコン**: Lucide React
+- **音声入力**: Web Speech API
 
 ## 🎨 主な機能の使い方
 
@@ -215,10 +217,6 @@ npm run dev
 - `.env.local`の設定が正しいか確認
 - ブラウザのCookieが有効になっているか確認
 
-## 📄 ライセンス
-
-MIT License
-
 ---
 
-Created by NaiYuk (最終更新：2025/12/02)
+Created by NaiYuk (最終更新：2025/12/05)
