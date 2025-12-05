@@ -41,6 +41,8 @@ const priorityLabels = {
   high: '高',
 }
 
+const today = new Date();
+
 export default function TaskCard({ task, onEdit, onDelete, onNotify }: TaskCardProps) {
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-5 border border-gray-200">
@@ -95,11 +97,17 @@ export default function TaskCard({ task, onEdit, onDelete, onNotify }: TaskCardP
           優先度: {priorityLabels[task.priority]}
         </span>
       </div>
-
+      
       {task.due_date && (
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <Calendar className="h-3 w-3" />
-          期限: {new Date(task.due_date).toLocaleDateString('ja-JP')}
+          期限日: {new Date(task.due_date).toLocaleDateString('ja-JP', { 
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          })} {new Date(task.due_date).toDateString() === today.toDateString() && (
+            <span className="text-red-600 font-semibold">（本日）</span>
+          )}
         </div>
       )}
 
