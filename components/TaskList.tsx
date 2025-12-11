@@ -330,7 +330,7 @@ export function TaskList({
           </button>
         </div>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+        <div className="mt-8 mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
           <h1 className="text-xl font-bold text-green-800 h-9">
             タスク一覧
           </h1>
