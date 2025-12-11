@@ -173,8 +173,8 @@ export default function TaskForm({ task, onSubmit, onClose }: TaskFormProps) {
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskStatus })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"
               >
-                <option value="todo">未着手</option>
-                <option value="in_progress">進行中</option>
+                <option value="todo">未対応</option>
+                <option value="in_progress">対応中</option>
                 <option value="done">完了</option>
               </select>
             </div>

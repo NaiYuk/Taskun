@@ -385,16 +385,41 @@ export function TaskList({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                onEdit={handleEditTask}
-                onDelete={handleDeleteTask}
-                onNotify={handleAddGoogleCalendar}
-              />
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[{ key: 'todo', label: '未対応', accent: 'bg-gray-50 border-gray-200' },
+              { key: 'in_progress', label: '対応中', accent: 'bg-blue-50 border-blue-200' },
+              { key: 'done', label: '完了', accent: 'bg-green-50 border-green-200' },
+            ].map((column) => {
+              const columnTasks = tasks.filter((task) => task.status === column.key)
+
+              return (
+                <div
+                  key={column.key}
+                  className={`flex flex-col gap-3 rounded-xl border ${column.accent} p-3`}
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-gray-800">{column.label}</h3>
+                    <span className="text-xs text-gray-500">{columnTasks.length}件</span>
+                  </div>
+
+                  {columnTasks.length === 0 ? (
+                    <p className="text-sm text-gray-400 py-6 text-center">タスクなし</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {columnTasks.map((task) => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onEdit={handleEditTask}
+                          onDelete={handleDeleteTask}
+                          onNotify={handleAddGoogleCalendar}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
 

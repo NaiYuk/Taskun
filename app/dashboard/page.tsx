@@ -106,14 +106,14 @@ export default function DashboardPage() {
           <div className="bg-gray-100 bg-opacity-50 rounded-xl shadow-sm p-5 border border-gray-200">
             <div className="text-sm text-gray-600 mb-1">
               <LucideStopCircle className='h-5 w-5 mb-2 text-gray-600'/>
-              未着手
+              未対応
             </div>
             <div className="text-3xl font-bold text-gray-600">{taskStats.todo}</div>
           </div>
           <div className="bg-indigo-100 bg-opacity-50 rounded-xl shadow-sm p-5 border border-blue-200">
             <div className="text-sm text-gray-600 mb-1">
               <LucideLoader className='h-5 w-5 mb-2 text-indigo-600'/>
-              進行中
+              対応中
             </div>
             <div className="text-3xl font-bold text-gray-600">{taskStats.in_progress}</div>
           </div>

@@ -18,8 +18,8 @@ const statusColors = {
 }
 
 const statusLabels = {
-  todo: '未着手',
-  in_progress: '進行中',
+  todo: '未対応',
+  in_progress: '対応中',
   done: '完了',
 }
 
