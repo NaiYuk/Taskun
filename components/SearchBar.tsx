@@ -68,7 +68,7 @@ export default function SearchBar({ onSearch, onClearFilter }: SearchBarProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 bg-white bg-opacity-30 p-4 rounded-lg shadow-md border border-gray-200">
       <div className="flex gap-3">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -95,27 +95,6 @@ export default function SearchBar({ onSearch, onClearFilter }: SearchBarProps) {
           </button>
         </div>
 
-        {/* 検索ボタン */}
-        <button
-          onClick={() => onSearch({ search, statuses })}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') onSearch({ search, statuses })
-          }}
-          className="px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
-        >
-          <Search className="h-5 w-5" />
-          検索
-        </button>
-
-        {/* クリアボタン */}
-        {(search || statuses.length > 0) && (
-          <button
-            onClick={clearFilters}
-            className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center gap-2"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        )}
       </div>
 
       <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
@@ -145,6 +124,29 @@ export default function SearchBar({ onSearch, onClearFilter }: SearchBarProps) {
             </label>
           ))}
         </div>
+      </div>
+      <div className="flex items-center gap-3">
+      {/* 検索ボタン */}
+        <button
+          onClick={() => onSearch({ search, statuses })}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') onSearch({ search, statuses })
+          }}
+          className="px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+        >
+          <Search className="h-5 w-5" />
+          検索
+        </button>
+
+        {/* クリアボタン */}
+        {(search || statuses.length > 0) && (
+          <button
+            onClick={clearFilters}
+            className="px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center gap-2"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
       </div>
     </div>
   )
