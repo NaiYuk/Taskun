@@ -43,7 +43,46 @@ const priorityLabels = {
 
 const today = new Date();
 
+/**
+ * 期限日に応じたスタイルを取得する
+ * @param dueDate 
+ * @returns 
+ */
+function getDueDateStyles(dueDate?: string | null) {
+  if (!dueDate) {
+    return {
+      text: 'text-gray-500',
+      pill: 'bg-gray-50 text-gray-600 border border-gray-100',
+    }
+  }
+
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  const parsedDueDate = new Date(dueDate)
+  const daysUntilDue = Math.floor((parsedDueDate.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (parsedDueDate < startOfToday) {
+    return {
+      text: 'text-red-700',
+      pill: 'bg-red-50 text-red-700 border border-red-100',
+    }
+  }
+
+  if (daysUntilDue < 5) {
+    return {
+      text: 'text-amber-700',
+      pill: 'bg-amber-50 text-amber-700 border border-amber-100',
+    }
+  }
+
+  return {
+    text: 'text-gray-500',
+    pill: 'bg-gray-50 text-gray-600 border border-gray-100',
+  }
+}
+
 export default function TaskCard({ task, onEdit, onDelete, onNotify }: TaskCardProps) {
+  const dueDateStyles = getDueDateStyles(task.due_date)
   return (
     <div className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-5 border border-gray-200">
       <div className="flex items-start justify-between gap-3 mb-3">
@@ -99,20 +138,26 @@ export default function TaskCard({ task, onEdit, onDelete, onNotify }: TaskCardP
       </div>
       
       {task.due_date && (
-        <div className="flex items-center gap-2 text-xs text-gray-500">
-          <Calendar className="h-3 w-3" />
-          期限日: {new Date(task.due_date).toLocaleDateString('ja-JP', { 
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-          })} {new Date(task.due_date).toDateString() === today.toDateString() && (
-            <span className="text-red-600 font-semibold">（本日）</span>
-          )}
+        <div className={`flex items-center gap-2 text-xs ${dueDateStyles.text}`}>
+          <span className={`inline-flex items-center gap-2 px-2 py-1 rounded-md ${dueDateStyles.pill}`}>
+            <Calendar className="h-3 w-3" />
+            <span className="font-medium">期限日:</span>
+            <span>
+              {new Date(task.due_date).toLocaleDateString('ja-JP', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              })}
+            </span>
+            {new Date(task.due_date).toDateString() === today.toDateString() && (
+              <span className="text-red-600 font-semibold">（本日）</span>
+            )}
+          </span>
         </div>
       )}
 
       <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
-        作成: {new Date(task.created_at).toLocaleDateString('ja-JP', { 
+        作成: {new Date(task.created_at).toLocaleDateString('ja-JP', {
           year: 'numeric',
           month: 'short',
           day: 'numeric',

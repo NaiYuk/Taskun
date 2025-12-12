@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { TaskStatus } from '@/types/task'
+import { Task, TaskStatus } from '@/types/task'
 
 /**
  * タスク作成処理
@@ -66,8 +66,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * タスク一覧取得（検索・フィルタリング対応）
+/** タスク一覧取得処理
  * @param request 
  * @returns 
  */
@@ -83,85 +82,90 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const search = searchParams.get('search') || ''
     const statusesParam = searchParams.get('statuses') || ''
+    const dueFilterParam = searchParams.get('due_filters') || ''
+
     const statuses = statusesParam
       .split(',')
-      .map((value) => value.trim())
-      .filter((value): value is TaskStatus => value === 'todo' || value === 'in_progress' || value === 'done')
+      .map(v => v.trim())
+      .filter((v): v is TaskStatus => ['todo', 'in_progress', 'done'].includes(v))
 
-    /**
-     * フィルタリング付きクエリ作成ヘルパー
-     * @param statusOverride 
-     * @param countOnly 
-     * @returns 
-     */
-    const createFilteredQuery = (statusOverride?: string, countOnly = false) => {
+    const dueFilters = dueFilterParam
+      .split(',')
+      .map(v => v.trim())
+      .filter(v => ['overdue', 'due_soon'].includes(v))
+
+    const createFilteredQuery = (statusOverride?: TaskStatus, countOnly = false) => {
       let query = supabase
         .from('tasks')
         .select('*', { count: 'exact', head: countOnly })
         .eq('user_id', user.id)
 
-      // LIKE検索（タイトルまたは説明）
+      // LIKE検索（タイトル・説明）
       if (search) {
         query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`)
       }
 
+      // ステータスフィルタ
       if (statusOverride) {
         query = query.eq('status', statusOverride)
-      } else if (statuses.length) {
+      } else if (statuses.length > 0) {
         query = query.in('status', statuses)
       }
 
       return query
     }
 
-    /**
-     * タスクステータス別集計クエリ作成ヘルパー
-     * @param statusOverride 
-     * @returns 
-     */
-    const createStatsQuery = (statusOverride?: TaskStatus) => {
-      let query = supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-
-      if (statusOverride) {
-        query = query.eq('status', statusOverride)
-      }
-
-      return query
-    }
-
-    const { data: tasks, error } = await createFilteredQuery()
+    const { data: rawTasks, error } = await createFilteredQuery()
       .order('created_at', { ascending: false })
-    
+
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    const [totalResult, todoResult, inProgressResult, doneResult] = await Promise.all([
-      createStatsQuery(),
-      createStatsQuery('todo'),
-      createStatsQuery('in_progress'),
-      createStatsQuery('done'),
-    ])
+    const tasks = applyDueDateFilters(rawTasks, dueFilters)
 
-    const total = totalResult.count || 0
-    const countError = totalResult.error || todoResult.error || inProgressResult.error || doneResult.error
-    if (countError) {
-      return NextResponse.json({ error: countError.message }, { status: 400 })
+    // -----------------------------
+    const statusCounts = {
+      total: tasks.length,
+      todo: tasks.filter(t => t.status === 'todo').length,
+      in_progress: tasks.filter(t => t.status === 'in_progress').length,
+      done: tasks.filter(t => t.status === 'done').length,
     }
 
-    return NextResponse.json({
-      tasks,
-      statusCounts: {
-        total,
-        todo: todoResult.count ?? 0,
-        in_progress: inProgressResult.count ?? 0,
-        done: doneResult.count ?? 0,
-      },
-    }, { status: 200 })
+    return NextResponse.json({ tasks, statusCounts }, { status: 200 })
+
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+}
+
+/**
+ * 期日フィルタの適用
+ * @param tasks 
+ * @param dueFilters 
+ * @returns 
+ */
+function applyDueDateFilters(tasks: Task[], dueFilters: string[]) {
+  if (dueFilters.length === 0) return tasks
+
+  const today = new Date()
+  const fiveDaysLater = new Date()
+  fiveDaysLater.setDate(today.getDate() + 5)
+
+  const isOverdue = (d: Date) => d < today
+  const isDueSoon = (d: Date) => d >= today && d <= fiveDaysLater
+
+  return tasks.filter(task => {
+    if (!task.due_date) return false
+    const d = new Date(task.due_date)
+
+    const overdue = dueFilters.includes('overdue')
+    const dueSoon = dueFilters.includes('due_soon')
+
+    if (overdue && !dueSoon) return isOverdue(d)
+    if (dueSoon && !overdue) return isDueSoon(d)
+    if (overdue && dueSoon) return isOverdue(d) || isDueSoon(d)
+
+    return true
+  })
 }
