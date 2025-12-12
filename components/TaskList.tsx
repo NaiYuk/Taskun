@@ -444,17 +444,6 @@ export function TaskList({
           <div className="flex-1">
             <SearchBar onSearch={handleSearch} onClearFilter={handleClear} />
           </div>
-
-          <button
-            onClick={() => {
-              setEditingTask(undefined);
-              setShowForm(true);
-            }}
-            className="flex items-center justify-center gap-2 px-6 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium shadow-sm"
-          >
-            <Plus className="h-5 w-5" />
-            新規タスク
-          </button>
         </div>
 
         {/* タスク一覧ヘッダー */}
@@ -494,6 +483,17 @@ export function TaskList({
           <p className="text-sm text-gray-500 sm:ml-2">
             タスクの編集・削除・ソート・Google Calendarの予定追加はこちらで行います
           </p>
+
+          <button
+            onClick={() => {
+              setEditingTask(undefined);
+              setShowForm(true);
+            }}
+            className="flex gap-2 px-6 py-2.5 ml-40 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium shadow-sm"
+          >
+            <Plus className="h-5 w-5" />
+            新規タスク
+          </button>
         </div>
 
         {/* タスク一覧 */}
