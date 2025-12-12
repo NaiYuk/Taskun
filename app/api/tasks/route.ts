@@ -87,12 +87,13 @@ export async function GET(request: NextRequest) {
       .split(',')
       .map((value) => value.trim())
       .filter((value): value is TaskStatus => value === 'todo' || value === 'in_progress' || value === 'done')
-    // let query = supabase
-    //   .from('tasks')
-    //   .select('*', { count: 'exact' })
-    //   .eq('user_id', user.id)
-    //   .order('created_at', { ascending: false })
 
+    /**
+     * フィルタリング付きクエリ作成ヘルパー
+     * @param statusOverride 
+     * @param countOnly 
+     * @returns 
+     */
     const createFilteredQuery = (statusOverride?: string, countOnly = false) => {
       let query = supabase
         .from('tasks')
@@ -112,28 +113,41 @@ export async function GET(request: NextRequest) {
 
       return query
     }
-    
-    const { data: tasks, error, count } = await createFilteredQuery()
+
+    /**
+     * タスクステータス別集計クエリ作成ヘルパー
+     * @param statusOverride 
+     * @returns 
+     */
+    const createStatsQuery = (statusOverride?: TaskStatus) => {
+      let query = supabase
+        .from('tasks')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+
+      if (statusOverride) {
+        query = query.eq('status', statusOverride)
+      }
+
+      return query
+    }
+
+    const { data: tasks, error } = await createFilteredQuery()
       .order('created_at', { ascending: false })
     
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    const total = count || 0
-    const [todoResult, inProgressResult, doneResult] = await Promise.all([
-      statuses.length === 0 || statuses.includes('todo')
-        ? createFilteredQuery('todo', true)
-        : Promise.resolve({ count: 0, error: null }),
-      statuses.length === 0 || statuses.includes('in_progress')
-        ? createFilteredQuery('in_progress', true)
-        : Promise.resolve({ count: 0, error: null }),
-      statuses.length === 0 || statuses.includes('done')
-        ? createFilteredQuery('done', true)
-        : Promise.resolve({ count: 0, error: null }),
+    const [totalResult, todoResult, inProgressResult, doneResult] = await Promise.all([
+      createStatsQuery(),
+      createStatsQuery('todo'),
+      createStatsQuery('in_progress'),
+      createStatsQuery('done'),
     ])
 
-    const countError = todoResult.error || inProgressResult.error || doneResult.error
+    const total = totalResult.count || 0
+    const countError = totalResult.error || todoResult.error || inProgressResult.error || doneResult.error
     if (countError) {
       return NextResponse.json({ error: countError.message }, { status: 400 })
     }

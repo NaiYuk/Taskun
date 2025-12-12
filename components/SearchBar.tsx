@@ -27,6 +27,7 @@ export default function SearchBar({ onSearch, onClearFilter }: SearchBarProps) {
   const [hasAppliedFilters, setHasAppliedFilters] = useState(false)
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
 
+  // 音声認識の初期化
   useEffect(() => {
     const SpeechRecognition =
       typeof window !== 'undefined'
@@ -51,6 +52,7 @@ export default function SearchBar({ onSearch, onClearFilter }: SearchBarProps) {
     }
   }, [])
 
+  // フィルタ適用状態の管理
   const clearFilters = () => {
     setSearch('')
     setStatuses([])
@@ -58,23 +60,30 @@ export default function SearchBar({ onSearch, onClearFilter }: SearchBarProps) {
     onClearFilter()
   }
 
-  const handleSearch = () => {
-    setHasAppliedFilters(true)
-    onSearch({ search, statuses })
-  }
-
+  /**
+   * ステータスフィルタの切り替え
+   * @param status 
+   */
   const toggleStatus = (status: TaskStatus) => {
     setStatuses((prev) =>
       prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
     )
   }
 
+  /**
+   * 音声入力の開始
+   * @returns 
+   */
   const startVoiceInput = () => {
     if (!recognitionRef.current) return
     setIsListening(true)
     recognitionRef.current.start()
   }
 
+  /**
+   * 音声入力の停止
+   * @returns 
+   */
   const stopVoiceInput = () => {
   if (!recognitionRef.current) return
   recognitionRef.current.stop()
