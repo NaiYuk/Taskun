@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Task } from '@/types/task'
-import {LogOut, LucideActivity, LucideLoader, LucideCheck, LucideHome, LucideAccessibility, LucidePackage, LucideRectangleVertical, LucidePause, LucidePauseCircle } from 'lucide-react'
+import {LogOut, LucideActivity, LucideLoader, LucideCheck, LucidePackage, LucidePauseCircle } from 'lucide-react'
 import { TaskList } from '@/components/TaskList'
 
 export default function DashboardPage() {
