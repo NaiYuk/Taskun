@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { TaskStatus } from '@/types/task'
 
 /**
  * タスク作成処理
@@ -81,9 +82,11 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams
     const search = searchParams.get('search') || ''
-    const status = searchParams.get('status') || ''
-    const priority = searchParams.get('priority') || ''
-
+    const statusesParam = searchParams.get('statuses') || ''
+    const statuses = statusesParam
+      .split(',')
+      .map((value) => value.trim())
+      .filter((value): value is TaskStatus => value === 'todo' || value === 'in_progress' || value === 'done')
     // let query = supabase
     //   .from('tasks')
     //   .select('*', { count: 'exact' })
@@ -103,13 +106,8 @@ export async function GET(request: NextRequest) {
 
       if (statusOverride) {
         query = query.eq('status', statusOverride)
-      } else if (status) {
-        query = query.eq('status', status)
-      }
-
-      // 優先度フィルター
-      if (priority) {
-        query = query.eq('priority', priority)
+      } else if (statuses.length) {
+        query = query.in('status', statuses)
       }
 
       return query
@@ -124,9 +122,15 @@ export async function GET(request: NextRequest) {
 
     const total = count || 0
     const [todoResult, inProgressResult, doneResult] = await Promise.all([
-      createFilteredQuery('todo', true),
-      createFilteredQuery('in_progress', true),
-      createFilteredQuery('done', true),
+      statuses.length === 0 || statuses.includes('todo')
+        ? createFilteredQuery('todo', true)
+        : Promise.resolve({ count: 0, error: null }),
+      statuses.length === 0 || statuses.includes('in_progress')
+        ? createFilteredQuery('in_progress', true)
+        : Promise.resolve({ count: 0, error: null }),
+      statuses.length === 0 || statuses.includes('done')
+        ? createFilteredQuery('done', true)
+        : Promise.resolve({ count: 0, error: null }),
     ])
 
     const countError = todoResult.error || inProgressResult.error || doneResult.error

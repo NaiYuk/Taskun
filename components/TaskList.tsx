@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
-import { Task, TaskFormData } from '@/types/task';
+import { Task, TaskFormData, TaskStatus } from '@/types/task';
 import { generateGoogleCalendarUrl } from "@/lib/google/calendar-url";
 import { Loader2, LucideSortAsc, LucideSortDesc, Plus } from "lucide-react";
 import SearchBar from "./SearchBar";
@@ -10,6 +10,7 @@ import TaskForm from "./TaskForm";
 import TaskCard from "./TaskCard";
 
 type SortItem = 'title' | 'priority' | 'due_date' | 'created_at'
+type ColumnSortState = Record<TaskStatus, { key: SortItem; order: 'asc' | 'desc' }>;
 export function TaskList({
   userEmail,
   onStatsChange,
@@ -20,21 +21,29 @@ export function TaskList({
   onStatsChange?: (stats: { total: number; todo: number; in_progress: number; done: number }) => void
 }) {
     const [tasks, setTasks] = useState<Task[]>([])
+    const [fetchedTasks, setFetchedTasks] = useState<Task[]>([])
     const [showForm, setShowForm] = useState(false)
     const [editingTask, setEditingTask] = useState<Task | undefined>(undefined)
     const [loading, setLoading] = useState(false)
     const [sortItem, setSortItem] = useState<SortItem>('created_at')
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
-    const [filters, setFilters] = useState({ search: '', status: '', priority: '' })
+    const [filters, setFilters] = useState<{ search: string; statuses: TaskStatus[] }>({ search: '', statuses: [] })
+    const currentFiltersRef = useRef(filters)
+    const [columnSorts, setColumnSorts] = useState<ColumnSortState>({
+      todo: { key: 'created_at', order: 'desc' },
+      in_progress: { key: 'created_at', order: 'desc' },
+      done: { key: 'created_at', order: 'desc' },
+    })
     const columnRefs = useRef<Record<string, HTMLDivElement | null>>({})
     const [activeVerticalSlides, setActiveVerticalSlides] = useState<Record<string, number>>({
       todo: 0,
       in_progress: 0,
       done: 0,
     })
+    const activeRequest = useRef<AbortController | null>(null)
     const supabase = createClient()
 
-    const hasActiveFilters = Boolean(filters.search || filters.status || filters.priority)
+    const hasActiveFilters = Boolean(filters.search || filters.statuses.length)
 
     /**
      * タスク一覧またはステータス数の変更を親コンポーネントに通知する
@@ -101,36 +110,46 @@ export function TaskList({
      * @param {Object} filtersToUse
      * @returns {Promise<void>}
      */
-    const loadTasks = useCallback(async (filtersToUse = filters) => {
+    const loadTasks = useCallback(async () => {
       setLoading(true)
+
+      // 前回のリクエストを中止
+      activeRequest.current?.abort()
+      const controller = new AbortController()
+      activeRequest.current = controller
+
       try {
         const params = new URLSearchParams()
+        const filtersToUse = currentFiltersRef.current
         if (filtersToUse.search) params.set('search', filtersToUse.search)
-        if (filtersToUse.status) params.set('status', filtersToUse.status)
-        if (filtersToUse.priority) params.set('priority', filtersToUse.priority)
+        if (filtersToUse.statuses.length) params.set('statuses', filtersToUse.statuses.join(','))
 
         const res = await fetch(`/api/tasks?${params.toString()}`)
         const data = await res.json()
 
         notifyStatsChange(data?.statusCounts)
-
-        const sortedTasks = applySort(data.tasks, sortItem, sortOrder)
-        setTasks(sortedTasks)
-        notifyTasksChange(sortedTasks)
+        setFetchedTasks(data.tasks)
+      } catch (error) {
+        if ((error as Error).name === 'AbortError') {
+          console.log('タスク取得エラー:', error)
+        }
       } finally {
         setLoading(false)
       }
-    }, [applySort, filters, notifyTasksChange, sortItem, sortOrder])
+    }, [notifyStatsChange])
 
-    // フィルタ変更時にタスクを再読み込み
+    // フィルター条件変更時にタスクを再取得する
     useEffect(() => {
-      loadTasks(filters)
+      currentFiltersRef.current = filters
+      loadTasks()
     }, [filters, loadTasks])
 
-    // ソート条件変更時にタスクを再ソート
-   useEffect(() => {
-    setTasks((prev) => applySort(prev, sortItem, sortOrder))
-    }, [applySort, sortItem, sortOrder])
+    // ソート条件変更時やタスク取得時にタスクを整列させる
+    useEffect(() => {
+      const sortedTasks = applySort(fetchedTasks, sortItem, sortOrder)
+      setTasks(sortedTasks)
+      notifyTasksChange(sortedTasks)
+    }, [applySort, fetchedTasks, notifyTasksChange, sortItem, sortOrder])
 
     // タスク一覧変更時に親コンポーネントに通知
     useEffect(() => {
@@ -147,7 +166,7 @@ export function TaskList({
           (payload) => {
             console.log("リアルタイム更新:", payload)
             if (payload.eventType === "INSERT" || payload.eventType === "UPDATE" || payload.eventType === "DELETE") {
-              loadTasks(filters)
+              loadTasks()
             }
           }
         )
@@ -156,14 +175,14 @@ export function TaskList({
       return () => {
         supabase.removeChannel(channel)
       }
-    }, [filters, loadTasks, supabase])
+    }, [loadTasks, supabase])
 
   /**
    * タスク検索処理（サーバーフィルタリング）
    * @param newFilters 
    * @returns {void}
    */
-  const handleSearch = (newFilters: { search: string; status: string; priority: string }) => {
+  const handleSearch = (newFilters: { search: string; statuses: TaskStatus[] }) => {
     setFilters(newFilters)
   }
 
@@ -191,7 +210,46 @@ export function TaskList({
    * @returns {void}
    */
   const handleClear= () => {
-    setFilters({ search: '', status: '', priority: '' })
+    setFilters({ search: '', statuses: [] })
+  }
+
+  /**
+   * カラムごとのソートキー変更処理
+   * @param columnKey
+   * @param key
+   * @returns {void}
+   */
+  const handleColumnSortKeyChange = (columnKey: TaskStatus, key: SortItem) => {
+    setColumnSorts((prev) => ({
+      ...prev,
+      [columnKey]: { ...prev[columnKey], key },
+    }))
+  }
+
+  /**
+   * カラムごとのソート順変更処理
+   * @param columnKey
+   * @returns {void}
+   */
+  const handleColumnSortOrderToggle = (columnKey: TaskStatus) => {
+    setColumnSorts((prev) => ({
+      ...prev,
+      [columnKey]: {
+        ...prev[columnKey],
+        order: prev[columnKey].order === 'asc' ? 'desc' : 'asc',
+      },
+    }))
+  }
+
+  /**
+   * カラムごとのタスクソート処理
+   * @param list  
+   * @param columnKey
+   * @return {Task[]}
+   */
+  const sortColumnTasks = (list: Task[], columnKey: TaskStatus) => {
+    const { key, order } = columnSorts[columnKey]
+    return applySort(list, key, order)
   }
 
   /**
@@ -455,16 +513,47 @@ export function TaskList({
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {columns.map((column) => {
-              const columnTasks = tasks.filter((task) => task.status === column.key);
+              const columnTasks = tasks.filter((task) => task.status === column.key)
+              const sortedColumnTasks = sortColumnTasks(columnTasks, column.key)
 
               return (
                 <div
                   key={column.key}
                   className={`flex flex-col gap-3 rounded-xl border ${column.accent} p-3`}
                 >
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-gray-800">{column.label}</h3>
-                    <span className="text-xs text-gray-500">{columnTasks.length}件</span>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-800">{column.label}</h3>
+                      <span className="text-xs text-gray-500">{columnTasks.length}件</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <label className="sr-only" htmlFor={`${column.key}-sort`}>
+                        {column.label}のソートキー
+                      </label>
+                      <select
+                        id={`${column.key}-sort`}
+                        value={columnSorts[column.key].key}
+                        onChange={(event) => handleColumnSortKeyChange(column.key, event.target.value as SortItem)}
+                        className="border border-gray-200 rounded-md px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400"
+                      >
+                        <option value="title">タイトル</option>
+                        <option value="priority">優先度</option>
+                        <option value="due_date">期限日</option>
+                        <option value="created_at">作成日時</option>
+                      </select>
+                      <button
+                        onClick={() => handleColumnSortOrderToggle(column.key)}
+                        className="p-1.5 bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+                        title={`${column.label}を${columnSorts[column.key].order === 'desc' ? '昇順' : '降順'}に切り替え`}
+                      >
+                        {columnSorts[column.key].order === 'desc' ? (
+                          <LucideSortDesc className="h-4 w-4 text-gray-600" aria-label="降順でソート" />
+                        ) : (
+                          <LucideSortAsc className="h-4 w-4 text-gray-600" aria-label="昇順でソート" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* タスクカード群 */}
