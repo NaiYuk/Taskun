@@ -437,7 +437,6 @@ export function TaskList({
         {/* 検索バーと新規作成ボタン */}
         <div className="flex gap-4 items-center mt-8">
           <h1 className="text-xl font-bold text-green-800 h-9">検索・新規作成</h1>
-          <p className="text-sm text-gray-500 pb-2">キーワード検索・条件検索</p>
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -448,48 +447,13 @@ export function TaskList({
 
         {/* タスク一覧ヘッダー */}
         <div className="mt-8 mb-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <h1 className="text-xl font-bold text-green-800 h-9">タスク一覧</h1>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <label htmlFor="sortKey" className="text-sm text-gray-500">
-              ソートキー:
-            </label>
-
-            <select
-              id="sortKey"
-              value={sortItem}
-              onChange={handleChangeSortKey}
-              className="border border-green-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400"
-            >
-              <option value="title">タイトル</option>
-              <option value="priority">優先度</option>
-              <option value="due_date">期限日</option>
-              <option value="created_at">作成日時</option>
-            </select>
-
-            <button
-              onClick={handleChangeSort}
-              className="p-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
-              title="ソート順を切り替え"
-            >
-              {sortOrder === "desc" ? (
-                <LucideSortDesc className="h-6 w-6 text-gray-100" aria-label="降順でソート" />
-              ) : (
-                <LucideSortAsc className="h-6 w-6 text-gray-100" aria-label="昇順でソート" />
-              )}
-            </button>
-          </div>
-
-          <p className="text-sm text-gray-500 sm:ml-2">
-            タスクの編集・削除・ソート・Google Calendarの予定追加はこちらで行います
-          </p>
-
+          <h1 className="text-xl font-bold text-green-800 h-6">タスク一覧</h1>
           <button
             onClick={() => {
               setEditingTask(undefined);
               setShowForm(true);
             }}
-            className="flex gap-2 px-6 py-2.5 ml-40 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium shadow-sm"
+            className="flex gap-2 px-4 py-2 ml-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium shadow-sm"
           >
             <Plus className="h-5 w-5" />
             新規タスク
@@ -564,7 +528,7 @@ export function TaskList({
                     onScroll={() => handleVerticalScroll(column.key)}
                     className="flex flex-col gap-3 overflow-y-auto max-h-[500px] pr-2"
                   >
-                    {columnTasks.map((task) => (
+                    {sortedColumnTasks.map((task) => (
                       <div key={task.id}>
                         <TaskCard
                           task={task}
