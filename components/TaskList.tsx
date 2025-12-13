@@ -16,10 +16,12 @@ export function TaskList({
   userEmail,
   onStatsChange,
   onTasksChange,
+  slackWebhookUrl,
 }: {
   userEmail: string
   onTasksChange?: (tasks: Task[]) => void
   onStatsChange?: (stats: { total: number; todo: number; in_progress: number; done: number }) => void
+  slackWebhookUrl?: string
 }) {
     const [tasks, setTasks] = useState<Task[]>([])
     const [fetchedTasks, setFetchedTasks] = useState<Task[]>([])
@@ -349,6 +351,7 @@ export function TaskList({
             priority: task.priority,
           },
           user_email: userEmail,
+          webhookUrl: slackWebhookUrl,
         }),
       })
 
@@ -402,6 +405,7 @@ export function TaskList({
               priority: data.priority,
             },
             user_email: userEmail,
+            webhookUrl: slackWebhookUrl
           }),
         })
       }
@@ -618,6 +622,7 @@ export function TaskList({
             task={editingTask}
             onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
             onClose={handleCloseForm}
+            defaultSlackWebhookUrl={slackWebhookUrl}
           />
         )}
       </div>

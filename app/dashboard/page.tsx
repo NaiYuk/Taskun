@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Task } from '@/types/task'
-import {LogOut, LucideActivity, LucideLoader, LucideCheck, LucidePackage, LucidePauseCircle } from 'lucide-react'
+import {LogOut, LucideActivity, LucideLoader, LucideCheck, LucidePackage, LucidePauseCircle, LucideSettings, X } from 'lucide-react'
 import { TaskList } from '@/components/TaskList'
 
 export default function DashboardPage() {
@@ -12,13 +12,21 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [userEmail, setUserEmail] = useState<string>('')
   const [taskStats, setTaskStats] = useState({ total: 0, todo: 0, in_progress: 0, done: 0 })
+  const [slackWebhookUrl, setSlackWebhookUrl] = useState('')
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [draftWebhookUrl, setDraftWebhookUrl] = useState('')
   const router = useRouter()
   const supabase = createClient()
 
-  // 初回ロード時にユーザー情報とタスクを取得
+  // 初回ロード時にユーザー情報とタスクとWebhook URLを読み込む
   useEffect(() => {
     loadUser()
     loadTasks()
+    const storedWebhookUrl = localStorage.getItem('slackWebhookUrl')
+    if (storedWebhookUrl) {
+      setSlackWebhookUrl(storedWebhookUrl)
+      setDraftWebhookUrl(storedWebhookUrl)
+    }
   }, [])
   
   /**
@@ -72,6 +80,16 @@ export default function DashboardPage() {
     router.push('/login')
   }
 
+  /** 
+   * Slack設定保存処理
+   * @return {void}
+   */
+  const handleSaveSettings = () => {
+    setSlackWebhookUrl(draftWebhookUrl)
+    localStorage.setItem('slackWebhookUrl', draftWebhookUrl)
+    setSettingsOpen(false)
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-200 to-black-800">
       {/* ヘッダー */}
@@ -88,6 +106,13 @@ export default function DashboardPage() {
             {/* 右側 ユーザー情報 */}
             <div className="flex flex-wrap items-center gap-3 sm:gap-4">
               <p className="py-1 text-sm text-gray-600">{userEmail} でログイン中</p>
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <LucideSettings className="h-5 w-5" />
+                <p>設定</p>
+              </button>
               
               <button
                 onClick={handleLogout}
@@ -139,8 +164,55 @@ export default function DashboardPage() {
           userEmail={userEmail}
           onTasksChange={setTasks}
           onStatsChange={setTaskStats}
+          slackWebhookUrl={slackWebhookUrl}
         />
       </main>
+      {settingsOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">通知設定</h2>
+                <p className="text-sm text-gray-500">Slack通知に使用するWebhook URLを設定します。</p>
+              </div>
+              <button
+                onClick={() => setSettingsOpen(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="設定を閉じる"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Slack Webhook URL</label>
+              <input
+                type="url"
+                value={draftWebhookUrl}
+                onChange={(e) => setDraftWebhookUrl(e.target.value)}
+                placeholder="https://hooks.slack.com/services/..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"
+              />
+              <p className="text-xs text-gray-500">未入力の場合は環境変数のWebhook URLが利用されます。</p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setSettingsOpen(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleSaveSettings}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

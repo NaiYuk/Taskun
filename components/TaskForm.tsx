@@ -8,9 +8,10 @@ interface TaskFormProps {
   task?: Task
   onSubmit: (data: TaskFormData) => Promise<void>
   onClose: () => void
+  defaultSlackWebhookUrl?: string
 }
 
-export default function TaskForm({ task, onSubmit, onClose }: TaskFormProps) {
+export default function TaskForm({ task, onSubmit, onClose, defaultSlackWebhookUrl }: TaskFormProps) {
   const [formData, setFormData] = useState<TaskFormData>({
     title: task?.title || '',
     description: task?.description || '',
@@ -20,7 +21,7 @@ export default function TaskForm({ task, onSubmit, onClose }: TaskFormProps) {
     reminderEnabled: false,
     reminderTiming: 'start',
     reminderCustomTime: '',
-    slackWebhookUrl: '',
+    slackWebhookUrl: defaultSlackWebhookUrl || '',
   })
   const [loading, setLoading] = useState(false)
   const [listeningField, setListeningField] = useState<null | 'title' | 'description'>(null)
@@ -38,6 +39,26 @@ export default function TaskForm({ task, onSubmit, onClose }: TaskFormProps) {
       recognitionRef.current?.stop()
     }
   }, [])
+
+  useEffect(() => {
+    setFormData({
+      title: task?.title || '',
+      description: task?.description || '',
+      status: task?.status || 'todo',
+      priority: task?.priority || 'medium',
+      due_date: task?.due_date || '',
+      reminderEnabled: false,
+      reminderTiming: 'start',
+      reminderCustomTime: '',
+      slackWebhookUrl: defaultSlackWebhookUrl || '',
+    })
+  }, [task, defaultSlackWebhookUrl])
+
+  useEffect(() => {
+    if (!formData.slackWebhookUrl && defaultSlackWebhookUrl) {
+      setFormData((prev) => ({ ...prev, slackWebhookUrl: defaultSlackWebhookUrl }))
+    }
+  }, [defaultSlackWebhookUrl, formData.slackWebhookUrl])
 
   /** 
    * フォーム送信処理
