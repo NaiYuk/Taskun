@@ -17,6 +17,10 @@ export default function TaskForm({ task, onSubmit, onClose }: TaskFormProps) {
     status: task?.status || 'todo',
     priority: task?.priority || 'medium',
     due_date: task?.due_date || '',
+    reminderEnabled: false,
+    reminderTiming: 'start',
+    reminderCustomTime: '',
+    slackWebhookUrl: '',
   })
   const [loading, setLoading] = useState(false)
   const [listeningField, setListeningField] = useState<null | 'title' | 'description'>(null)
@@ -44,6 +48,19 @@ export default function TaskForm({ task, onSubmit, onClose }: TaskFormProps) {
     e.preventDefault()
     setLoading(true)
     try {
+      if (formData.reminderEnabled) {
+        if (!formData.slackWebhookUrl) {
+          alert('Slack Webhook URLを入力してください')
+          setLoading(false)
+          return
+        }
+
+        if (formData.reminderTiming === 'custom' && !formData.reminderCustomTime) {
+          alert('カスタムのリマインド時間を入力してください')
+          setLoading(false)
+          return
+        }
+      }
       await onSubmit(formData)
       onClose()
     } catch (error) {
@@ -218,6 +235,71 @@ export default function TaskForm({ task, onSubmit, onClose }: TaskFormProps) {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"
               />
             </div>
+          </div>
+          
+          <div className="mt-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Slackリマインド
+                </label>
+                <p className="text-xs text-gray-500">指定したタイミングでSlackに通知します</p>
+              </div>
+              <label className="inline-flex items-center cursor-pointer">
+                <span className="sr-only">リマインドを有効化</span>
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={formData.reminderEnabled}
+                  onChange={(e) => setFormData({ ...formData, reminderEnabled: e.target.checked })}
+                />
+                <div className={`w-10 h-5 rounded-full transition-colors ${formData.reminderEnabled ? 'bg-green-500' : 'bg-gray-300'}`}>
+                  <div className={`w-5 h-5 bg-white rounded-full shadow transform transition-transform ${formData.reminderEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                </div>
+              </label>
+            </div>
+
+            {formData.reminderEnabled && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">リマインド時間</label>
+                  <select
+                    value={formData.reminderTiming}
+                    onChange={(e) => setFormData({ ...formData, reminderTiming: e.target.value as TaskFormData['reminderTiming'] })}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"
+                  >
+                    <option value="start">開始時</option>
+                    <option value="10m">10分前</option>
+                    <option value="1h">1時間前</option>
+                    <option value="custom">カスタム</option>
+                  </select>
+
+                  {formData.reminderTiming === 'custom' && (
+                    <input
+                      type="datetime-local"
+                      value={formData.reminderCustomTime}
+                      onChange={(e) => setFormData({ ...formData, reminderCustomTime: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Slack Webhook URL <span className="text-red-500">* 必須</span>
+                  </label>
+                  <input
+                    type="url"
+                    required={formData.reminderEnabled}
+                    value={formData.slackWebhookUrl}
+                    onChange={(e) => setFormData({ ...formData, slackWebhookUrl: e.target.value })}
+                    placeholder="https://hooks.slack.com/services/..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-gray-900"
+                  />
+                  <p className="text-xs text-gray-500">通知先のSlackチャンネルのWebhook URLを入力してください</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-4 border-t border-gray-200">

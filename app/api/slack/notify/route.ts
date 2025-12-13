@@ -8,21 +8,25 @@ import type { NextRequest } from 'next/server'
  */
 export async function POST(request: NextRequest) {
   try {
-    const webhookUrl = process.env.SLACK_WEBHOOK_URL
+    const body = await request.json()
+    const { action, task, user_email, webhookUrl: customWebhookUrl, reminder_time } = body
+    const webhookUrl = customWebhookUrl || process.env.SLACK_WEBHOOK_URL
 
     if (!webhookUrl) {
-      console.error('SLACK_WEBHOOK_URLが設定されていません')
+      console.error('Slack Webhook URLが設定されていません')
       return NextResponse.json(
         { error: 'Slack Webhook URLが設定されていません' },
         { status: 500 }
       )
     }
 
-    const body = await request.json()
-    const { action, task, user_email } = body
-
-    const actionText = action === 'created' ? '作成されました' : '更新されました'
-    const emoji = action === 'created' ? '✨' : '🔄'
+    const isReminder = action === 'reminder'
+    const actionText = isReminder
+      ? 'リマインダーです'
+      : action === 'created'
+        ? '作成されました'
+        : '更新されました'
+    const emoji = isReminder ? '⏰' : action === 'created' ? '✨' : '🔄'
 
     const priorityEmoji = {
       high: '🔴',
@@ -69,6 +73,18 @@ export async function POST(request: NextRequest) {
           ],
         },
       ],
+    }
+
+    if (isReminder && reminder_time) {
+      slackMessage.blocks.push({
+        type: 'context',
+        elements: [
+          {
+            type: 'mrkdwn',
+            text: `リマインド時刻: ${new Date(reminder_time).toLocaleString('ja-JP')}`,
+          },
+        ],
+      } as any)
     }
 
     if (task.description) {

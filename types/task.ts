@@ -19,4 +19,8 @@ export interface TaskFormData {
   status?: TaskStatus
   priority?: TaskPriority
   due_date?: string
+  reminderEnabled?: boolean
+  reminderTiming?: 'start' | '10m' | '1h' | 'custom'
+  reminderCustomTime?: string
+  slackWebhookUrl?: string
 }
