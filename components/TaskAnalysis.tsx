@@ -14,6 +14,27 @@ interface TaskStats {
 }
 
 export default function TaskAnalysis({ tasks = [], taskStats }: { tasks?: Task[]; taskStats: TaskStats }) {
+  // まもなく期限のタスクのカウントを計算
+  const duesoonCount = tasks.filter(task => {
+    if (!task.due_date) return false;
+    const dueDate = new Date(task.due_date);
+    const today = new Date();
+    const timeDiff = dueDate.getTime() - today.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    return daysDiff >= 0 && daysDiff <= 5;
+  }).length;
+
+  // 期限切れのタスクのカウントを計算
+  const overdueCount = tasks.filter(task => {
+    if (!task.due_date) return false;
+    const dueDate = new Date(task.due_date);
+    const today = new Date();
+    return dueDate < today;
+  }).length;
+
+  // タスク進捗度を計算
+  const progressRate = taskStats.total === 0 ? 0 : Math.round((taskStats.done / taskStats.total) * 100);
+
   return (
     <>
     <h1 className="text-xl font-bold text-green-800 h-9">タスク統計情報</h1>
@@ -53,14 +74,7 @@ export default function TaskAnalysis({ tasks = [], taskStats }: { tasks?: Task[]
             まもなく期限
         </div>
         <div className="text-3xl font-bold text-gray-900">
-            {tasks.filter(task => {
-            if (!task.due_date) return false
-            const dueDate = new Date(task.due_date)
-            const today = new Date()
-            const timeDiff = dueDate.getTime() - today.getTime()
-            const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24))
-            return daysDiff >=0 && daysDiff <=5
-            }).length}
+            {duesoonCount}
         </div>
         </div>
         <div className="bg-red-200 bg-opacity-70 rounded-xl shadow-sm p-5 border border-red-300">
@@ -69,12 +83,7 @@ export default function TaskAnalysis({ tasks = [], taskStats }: { tasks?: Task[]
             期限切れ
         </div>
         <div className="text-3xl font-bold text-gray-900">
-            {tasks.filter(task => {
-            if (!task.due_date) return false
-            const dueDate = new Date(task.due_date)
-            const today = new Date()
-            return dueDate < today
-            }).length}
+            {overdueCount}
         </div>
         </div>  
         <div className="bg-white bg-opacity-50 rounded-xl shadow-sm p-5 border border-gray-200 col-span-2">
@@ -86,10 +95,10 @@ export default function TaskAnalysis({ tasks = [], taskStats }: { tasks?: Task[]
             <div
             className="bg-green-600 h-6 rounded-full text-white text-center font-medium transition-all duration-500"
             style={{
-                width: taskStats.total === 0 ? '0%' : `${Math.round((taskStats.done / taskStats.total) * 100)}%`
+                width: taskStats.total === 0 ? '0%' : `${progressRate}%`
             }}
             >
-            {taskStats.total === 0 ? '0%' : `${Math.round((taskStats.done / taskStats.total) * 100)}%`}
+            {taskStats.total === 0 ? '0%' : `${progressRate}%`}
             </div>
         </div>
         </div>  
